@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>Simple Text Editor</title>
+  <style>
+    textarea {
+      width: 100%;
+      height: 700px;
+      max-height: 100%;
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: none;
+      box-sizing: border-box;
+    }
+    #filename {margin: 5px 0 5px 0;}
+    #info {
+      margin: 0 0 5px 0;
+      font-size: 12px;
+    }
+    @media only screen and (max-height: 785px) {
+      textarea {height: 620px;}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <noscript>
+      <p style="color: var(--error);">No Javascript? Some features may not work!</p>
+    </noscript>
+    <div>
+      <h1 id="filename">Untitled</h1>
+      <section>
+        <button onclick="importFile();" style="margin-left: 0;">Import</button>
+        <button onclick="exportFile();">Export</button>
+        <button onclick="saveFile();">Save</button>
+      </section>
+      <p id="info"></p>
+    </div>
+    <textarea id="editor"></textarea>
+  </main>
+  <footer>by Lukiiy!</footer>
+<script>
+  const editor = document.getElementById('editor');
+  const info = document.getElementById('info');
+  const filename = document.getElementById('filename');
+  let extension = 'txt';
+
+  function updateInfo() {
+    const lines = editor.value.split('\n').length;
+    const chars = editor.value.length;
+    info.innerHTML = `Lines: ${lines} | Characters: ${chars}`;
+  }
+  editor.addEventListener('input', updateInfo);
+
+  function importFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'text/plain';
+
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        editor.value = reader.result;
+        updateInfo();
+        let name = file.name || 'Untitled';
+        if (name.length > 32) {
+          name = name.substring(0, 32) + '...';
+        }
+        filename.innerHTML = name.split('.').slice(0, -1).join('.');
+        extension = name.split('.').pop() || 'txt';
+        saveFile();
+      });
+      reader.readAsText(file);
+    });
+    input.click();
+  }
+
+  function exportFile() {
+    const data = new Blob([editor.value], { type: 'text/plain' });
+    const url = URL.createObjectURL(data);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `text.${extension}`;
+    link.click();
+  }
+
+  function saveFile() {localStorage.setItem('text', editor.value);}
+
+  if (localStorage.getItem('text')) {
+    editor.value = localStorage.getItem('text');
+    updateInfo();
+  }
+
+  document.addEventListener('keydown', function(event) {
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+      event.preventDefault();
+      saveFile();
+      exportFile();
+    }
+  });
+</script>
+</body>
+</html>
